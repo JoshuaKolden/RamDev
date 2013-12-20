@@ -1,0 +1,81 @@
+# Dev
+
+Dev is a set of utilities for rapid software development. It is opinionated software,
+and as such uses tools that may not be a good fit for everyone.
+
+## Commands
+
+dev up - Spin up a dev session in RAMDISK.
+dev down - Sync and tear down the RAMDISK session.
+
+~
+  .bashrc
+
+    /x/d/support/dev
+      + ruby/
+      + spec/
+      .rspec
+      .ruby-gemset
+      .ruby-version
+      dev
+      dev.xiki
+      Gemfile
+      Gemfile.lock
+
+---
+
+## Setup log
+
+/x/d/support/dev/
+  $ bundle
+    Using arrayfields (4.9.0)
+    Using timers (1.1.0)
+    Using celluloid (0.15.2)
+    Using chronic (0.10.2)
+    Using coderay (1.1.0)
+    Using diff-lcs (1.2.5)
+    Using fattr (2.2.1)
+    Using ffi (1.9.3)
+    Using formatador (0.2.4)
+    Using rb-fsevent (0.9.3)
+    Using rb-inotify (0.9.3)
+    Using listen (2.4.0)
+    Using lumberjack (1.0.4)
+    Using method_source (0.8.2)
+    Using slop (3.4.7)
+    Using pry (0.9.12.4)
+    Using thor (0.18.1)
+    Using guard (2.2.5)
+    Using rspec-core (2.14.7)
+    Using rspec-expectations (2.14.4)
+    Using rspec-mocks (2.14.4)
+    Using rspec (2.14.1)
+    Using guard-rspec (4.2.0)
+    Using map (6.5.1)
+    Using main (5.2.0)
+    Using bundler (1.3.5)
+    Your bundle is complete!
+    Use `bundle show [gemname]` to see where a bundled gem is installed.
+
+
+  $ bundle exec guard init
+    00:44:40 - INFO - Writing new Guardfile to /x/d/support/dev/Guardfile
+    00:44:40 - INFO - rspec guard added to Guardfile, feel free to edit it
+
+~/
+  .rspec
+  $ touch .rspec
+  touch: ~/.rspec: No such file or directory
+
+~/
+  .devrc
+
+/x/d/support/dev/spec
+  $ mkdir fixtures
+
+/x/d/support/dev/test/ramdisk/test_source/testfile.md
+  testfile.md
+
+/x/d/support/dev/test/
+  $ touch test_source2_backup_DEV
+

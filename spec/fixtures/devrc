@@ -1,0 +1,13 @@
+# This a yaml format file with settings for "dev".
+# See dev -h for more information.
+
+ramdisk:
+  name: test_ramedisk
+  mountpoint: "test/ramdisk"
+  paths:
+    -
+      source: "test/test_source"
+      destination: ""
+    -
+      source: "test/test_source2/"
+      destination: ""
