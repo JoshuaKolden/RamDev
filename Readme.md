@@ -8,6 +8,7 @@ When you're done working, a single command insures your files are synced and unm
 
 ## Installation
 
+__Not ready yet__
     $ gem install ramdev
 
 ## Platforms
@@ -67,5 +68,12 @@ in sync, then the `/usr/joshua/myproject` link is removed and `/usr/joshua/mypro
 
 ## Problems
 
-If you loose power or 
+If you loose power or run into problems, you can run
 
+    $ ramdev fix
+
+Your original folders will be moved back into place.
+
+To force sync:
+
+    $ ramdev sync
