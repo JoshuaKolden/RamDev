@@ -21,7 +21,7 @@ To start the ram disk and copy files.
 
     $ ramdev up
 
-To sync files shutdown the ram disk.
+To sync files and shutdown the ram disk.
 
     $ ramdev down
 
@@ -30,11 +30,11 @@ To sync files shutdown the ram disk.
 Ramdev looks for a .ramdevrc file in your home directory.
 
 ```yaml
-# This a yaml format file with settings for "dev".
-# See dev -h for more information.
+# This a yaml format file with settings for "ramdev".
+# See ramdev for more information.
 
 ramdisk:
-  name: NameOfDisk
+  name: "NameOfDisk"
   mountpoint: "/path/to/mount/point"
   paths: # list of paths to copy to ramdisk, and location on ramdisk 
     -
@@ -47,21 +47,21 @@ ramdisk:
 
 The name of the lowest folder in the source path is appended to the 'destination' path which in tern is appended to the mountpoint. For example
 
-Mount point: `/mnt`
-Source: `/usr/joshua/myproject`
-Destination: `current`
+* Mount point: `/mnt`
+* Source: `/usr/joshua/myproject`
+* Destination: `current`
 
 Will create the the following path on the ramdisk:
 
 `/mnt/current/myproject`
 
-And 
-
-`/usr/joshua/myproject` will be a symbolic link to `/mnt/current/myproject`
+This will have a full copy of `/usr/joshua/myproject` And 
 
 `/usr/joshua/myproject` will be renamed to `/usr/joshua/myproject_ramdev`
 
-As you make changes to `/mnt/current/myproject` they will synced back to `/usr/joshua/myproject_ramdev`
+`/usr/joshua/myproject` will be a symbolic link to `/mnt/current/myproject`
+
+As you make changes to `/mnt/current/myproject` they will be automatically synced back to `/usr/joshua/myproject_ramdev`
 
 When you run `ramdev.down` `rsync` is run again just to be sure everything is
 in sync, then the `/usr/joshua/myproject` link is removed and `/usr/joshua/myproject_ramdev` is renamed back to `/usr/joshua/myproject`.
@@ -77,3 +77,11 @@ Your original folders will be moved back into place.
 To force sync:
 
     $ ramdev sync
+
+To check if the ramdev file monitoring process is running correctly:
+
+    $ ramdev check
+
+---
+
+By Joshua Kolden.  License info coming soon.
