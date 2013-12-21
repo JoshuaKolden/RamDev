@@ -1,11 +1,11 @@
 require 'fileutils'
 
-load 'dev_sync_ramdisk'
+require 'ramdev_sync'
 
-describe DevSyncRamdisk do
+describe RamDevSync do
 
   before(:each) do
-    @watcher = DevSyncRamdisk.new ("spec/fixtures/devrc")
+    @watcher = RamDevSync.new ( File.open( "spec/fixtures/devrc") )
   end
 
   it "it loads rc file and parses paths" do
@@ -16,11 +16,13 @@ describe DevSyncRamdisk do
     @watcher.watchpaths[0][0].should eq("test/ramdisk/test_source")
       #ignore trailing '/'
     @watcher.watchpaths[1][0].should eq("test/ramdisk/test_source2")
+    @watcher.watchpaths[2][0].should eq("test/ramdisk/other_path/test_source3")
   end
 
   it "has correct path for rsync target" do
     @watcher.watchpaths[0][1].should eq("test/test_source_backup_DEV")
     @watcher.watchpaths[1][1].should eq("test/test_source2_backup_DEV")
+    @watcher.watchpaths[2][1].should eq("test/test_source3_backup_DEV")
   end
 
   it "listens for changes in watchpaths" do

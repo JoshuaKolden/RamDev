@@ -1,5 +1,5 @@
-# This a yaml format file with settings for "dev".
-# See dev -h for more information.
+# This a yaml format file with settings for "ramdev".
+# See ramdev for more information.
 
 ramdisk:
   name: test_ramedisk
@@ -11,3 +11,6 @@ ramdisk:
     -
       source: "test/test_source2/"
       destination: ""
+    -
+      source: "test/test_source3/"
+      destination: "other_path"

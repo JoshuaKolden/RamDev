@@ -1,5 +1,4 @@
-load 'dev'
-
+require 'ramdev'
 
 describe SystemInfo do
 

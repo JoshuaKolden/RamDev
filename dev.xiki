@@ -79,3 +79,34 @@ dev down - Sync and tear down the RAMDISK session.
 /x/d/support/dev/test/
   $ touch test_source2_backup_DEV
 
+
+## Steps
+
+/x/d/support/dev
+  $ touch RamDev.gemspec
+  $ mkdir lib
+  $ git mv dev lib/ramdev.rb
+  $ git mv dev_sync_ramdisk lib/ramdev_sync.rb
+  spec
+    + fixtures/
+    dev_spec.rb
+    dev_sync_ramdisk_spec.rb
+    spec_helper.rb
+    $ git mv dev_sync_ramdisk_spec.rb ramdev_sync_spec.rb
+
+
+/x/d/support/dev/lib
+  ramdev.rb
+  ramdev_sync.rb
+
+
+/x/d/support/dev/
+  $mkdir bin
+  $touch bin/ramdev
+  $touch bin/ramdev_sync
+  bin
+    ramdev
+    ramdev_sync
+
+
+Don't forget to add a proc ID and fork the ramdev_sync process.

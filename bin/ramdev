@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+
+require 'main'
+require 'ramdev'
+
+def getrc
+  si = SystemInfo.new
+  si.loadOrCreateRC
+end
+
+def build_ramdisk
+  rc = getrc
+  rd = RamDev.new #options?
+  rd.build(rc["ramdisk"]["name"],rc["ramdisk"]["mountpoint"],rc["ramdisk"]["paths"])
+end
+
+def teardown_ramdisk
+  rc = getrc
+  rd = RamDev.new #options?
+  rd.unbuild(rc["ramdisk"]["name"],rc["ramdisk"]["mountpoint"],rc["ramdisk"]["paths"])
+end
+
+Main do
+  mode 'up' do
+    def run
+      puts 'building RAMDISK...'
+      build_ramdisk
+    end
+  end
+
+  mode 'down' do
+    def run
+      puts 'tearing down RAMDISK...'
+      teardown_ramdisk
+    end
+  end
+
+  mode 'aws' do
+    def run
+      puts 'do something with AWS...'
+    end
+  end
+
+  def run()
+    puts 'doing something different'
+  end
+end

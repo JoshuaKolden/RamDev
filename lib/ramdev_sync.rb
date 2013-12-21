@@ -3,12 +3,12 @@
 require 'listen'
 require 'yaml'
 
-class DevSyncRamdisk
+class RamDevSync
   attr_reader :paths, :listener
 
   def initialize(rcpath)
     @paths = []
-    rc = YAML.load_file rcpath
+    rc = YAML.load rcpath
     @mountpoint = rc["ramdisk"]["mountpoint"]
     for pathset in rc["ramdisk"]["paths"] do
       @paths.push([pathset["source"], "#{@mountpoint}/#{pathset['destination']}"])
@@ -17,8 +17,10 @@ class DevSyncRamdisk
 
   def watchpaths
     return @paths.collect do |i|
-      ["#{@mountpoint}/#{i[0][/([^\/]*)\/*$/,1]}", # path being watched
-      "#{i[0][/(.*[^\/]+)\/*$/,1]}_backup_DEV"]               # origin path to sync to
+        # path being watched
+      ["#{i[1]}/#{i[0][/([^\/]*)\/*$/,1]}".gsub(/\/{2,}/,"/"),
+          # origin path to sync to
+      "#{i[0][/(.*[^\/]+)\/*$/,1]}_backup_DEV".gsub(/\/{2,}/,"/")]
     end
   end
 
@@ -41,7 +43,3 @@ class DevSyncRamdisk
   end
 
 end
-
-# watcher = DevSyncRamdisk.new(ARGF)
-# watcher.listen
-# sleep
