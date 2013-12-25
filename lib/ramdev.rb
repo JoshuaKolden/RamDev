@@ -28,14 +28,14 @@ class SystemInfo
   end
 
   def loadOrCreateRC
-    rcpath = "#{home}/.devrc"
+    rcpath = "#{home}/.ramdevrc"
     unless File.exist? rcpath
       File.open(rcpath, "w") do |f|
         f.puts '# This is a yaml format file with settings for "dev".'
         f.puts '# See dev -h for more information.'
       end
     end
-    puts "Loading devrc: #{rcpath}"
+    puts "Loading ramdevrc: #{rcpath}"
     YAML.load_file rcpath
   end
 
