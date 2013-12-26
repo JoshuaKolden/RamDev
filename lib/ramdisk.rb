@@ -44,7 +44,8 @@ class SystemInfo
 
 
   def self.ramdisks
-    @@ramdisks ||= read_hdutil
+      # cannot be ||= because state may have changed.
+    @@ramdisks = read_hdutil
   end
 
 end
@@ -60,6 +61,14 @@ class Ramdisk
     self.system_interface = system_interface
   end
 
+  def unmounted=(m)
+    @unmounted = m
+  end
+
+  def unmounted
+    @unmounted ||= []
+  end
+
   def mounted?
     list.each do |i|
       return true if i[1] =~ /#{mountpoint}$/
@@ -68,15 +77,23 @@ class Ramdisk
   end
 
   def list
-    @list ||= system_interface.ramdisks
+      # cannot be ||= because state may have changed.
+    @list = system_interface.ramdisks
+  end
+
+  def ramdisk=(device)
+    @ramdisk = device
   end
 
   def ramdisk
-    return @ramdisk if @ramdisk
+    return @ramdisk if !@ramdisk.nil?
     list.each do |i|
-      return i[0] if i[1] =~ /#{mountpoint}$/
+      if i[1] =~ /#{mountpoint}$/
+        @ramdisk = i[0]
+        break
+      end
     end
-    # else return nil
+    @ramdisk
   end
 
   def allocate(size)
@@ -85,12 +102,15 @@ class Ramdisk
   end
 
   def deallocate
-    msg = system_interface.deallocate(ramdisk)
-    if msg =~ /.*unmounted\./
-      return true
+    unmounted.each do |u|
+      msg = system_interface.deallocate(u)
+      if !msg =~ /.*unmounted\./
+        throw "ramdisk: #{u} failed to deallocate ramdisk with this message: #{msg}"
+        return false
+      end
     end
-    throw "ramdisk failed to deallocate ramdisk with this message: #{msg}"
-    return false
+    unmounted = []
+    return true
   end
 
   def format(drivename = "ramdev", fileSystemFormat = :hfs)
@@ -120,8 +140,10 @@ class Ramdisk
   end
 
   def unmount
+    unmounted_device = ramdisk
     msg = system_interface.unmount(mountpoint)
     if msg == ""
+      unmounted.push(unmounted_device)
       return true
     else
       throw "ramdisk failed to un-mount with this message: #{msg}"

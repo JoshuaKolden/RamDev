@@ -3,5 +3,12 @@
 require 'ramdev_sync'
 
 watcher = RamDevSync.new(ARGF.read)
+
+trap("QUIT") do
+  puts "Interrupted by normal shutdown signal, ramdev_sync will stop now."
+  watcher.remove_log
+  exit
+end
+
 watcher.listen
 sleep

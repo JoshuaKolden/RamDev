@@ -1,3 +1,7 @@
+require "ramdev_sync"
+
+require 'pstore'
+store = PStore.new("ramdev.pstore")
 
 class RamDev
   attr_reader :diskname, :ramdisk, :mountpoint
@@ -18,31 +22,73 @@ class RamDev
     end
     ramdisk = Ramdisk.new(mountpoint)
 
+    pid = store.transaction do |s|
+      s["pid"]
+    end
+
+    kill("QUIT", pid) if pid
+
     ramdisk.unmount
     ramdisk.deallocate
 
-    "RAM disk mounted at #{mountpoint}"
+    "RAM disk removed at #{mountpoint}"
   end
 
-  def build(rcpath, size=10485760)
+  def memory
+    if @memory.nil?
+      r = `/usr/sbin/system_profiler SPHardwareDataType`.split("\n").collect { |s| s == "" ? nil : s.strip }.compact
+      r = r.collect { |s| s.split(":").collect { |ss| ss.strip }}
+      memstring = ""
+      r.each do |i|
+        memstring = i[1] if i[0] == "Memory"
+      end
+      @memory = memstring.match(/([0-9]+) GB/)[1].to_i * 1073741824
+    end
+    @memory
+  end
+
+  def build(rcpath, size)
+    @size = size
+    @size ||= memory / 2
     load_runcom(rcpath)
+
 
     ramdisk = Ramdisk.new(mountpoint)
 
-    ramdisk.allocate(10 * 1048576)
+    puts "Allocating ramdisk size: #{@size / 1073741824} GB "
+    ramdisk.allocate(@size)
     ramdisk.format(diskname, :hfs)
     ramdisk.mount
 
     copy_folders if valid_paths?
 
     puts "RAM disk mounted at #{mountpoint}"
+
+    #FIX: Not compatible with Windows:
+
+    if pid = fork do
+      store.transaction do |s|
+        s["pid"] = pid
+      end
+      puts "ramdev_sync pid = #{pid}"
+    else
+      trap("QUIT") do
+        puts "Interrupted by signal, ramdev_sync will stop now."
+        exit
+      end
+
+      watcher = RamDevSync.new(rcpath)
+      watcher.listen
+      puts "ramdev_sync listening..."
+      sleep
+    end
+
   end
 
-  def load_runcom(rcpath)
+  def load_runcom(rcfile)
 
     return if @loaded == true
-
-    rc = YAML.load_file(rcpath)
+    rc = YAML.load(rcpath)
     if rc.nil?
       @mountpoint = "/ramdev"
       @diskname   = "ramdev"
@@ -53,6 +99,7 @@ class RamDev
       @diskname  = rc["ramdisk"]["name"]
         # TODO: Get size of paths and create default ramdisk size based it (2x)
       @paths     = rc["ramdisk"]["paths"]
+      @size      ||= rc["ramdisk"]["size"] if rc["ramdisk"]["size"]
       @loaded    = true
     end
 
@@ -72,20 +119,19 @@ class RamDev
   def restore_folders
     @paths.each do |p|
       src   = p["source"].gsub(/\/+$/,"")
-      next if src.nil? || src.length < 1
-      des   = p["destination"].gsub(/\/+$/,"").gsub(/^\/+/,"")
-      name  = src.match(/([^\/\\]+)$/)[1]
 
-      if File.exists? src+@backupSuffix
-        FileUtils.safe_unlink src if File.symlink?(src)
-        if File.exist?(src)
-          print "Conflict between #{src} and #{src+@backupSuffix}"
-          next
-        end
-        FileUtils.move(src+@backupSuffix, src)
+      if !File.exists? src+@backupSuffix || !File.symlink?(src)
+        puts "Referenced files don't appear to be linked properly. "
+        return false
       end
     end
 
+    @paths.each do |p|
+      src   = p["source"].gsub(/\/+$/,"")
+      FileUtils.safe_unlink src
+      FileUtils.move(src+@backupSuffix, src)
+    end
+    true
   end
 
   def copy_folders

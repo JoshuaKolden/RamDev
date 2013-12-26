@@ -2,46 +2,32 @@
 
 require 'main'
 require 'ramdev'
+require 'etc'
 
-def getrc
-  si = SystemInfo.new
-  si.loadOrCreateRC
-end
-
-def build_ramdisk
-  rc = getrc
-  rd = RamDev.new #options?
-  rd.build(rc["ramdisk"]["name"],rc["ramdisk"]["mountpoint"],rc["ramdisk"]["paths"])
-end
-
-def teardown_ramdisk
-  rc = getrc
-  rd = RamDev.new #options?
-  rd.unbuild(rc["ramdisk"]["name"],rc["ramdisk"]["mountpoint"],rc["ramdisk"]["paths"])
-end
+#TODO: Override the rc file from the command line
+#FIX: This is not windows compatible.
+user = Etc.getlogin
+rcfile = File.join(Dir.home(user), ".ramdevrc")
 
 Main do
   mode 'up' do
     def run
-      puts 'building RAMDISK...'
-      build_ramdisk
+      rd = RamDev.new
+      rd.build(rcfile, 10485760) #10MB
     end
   end
 
   mode 'down' do
     def run
-      puts 'tearing down RAMDISK...'
-      teardown_ramdisk
-    end
-  end
-
-  mode 'aws' do
-    def run
-      puts 'do something with AWS...'
+      rd = RamDev.new
+      rd.unbuild(rcfile)
     end
   end
 
   def run()
-    puts 'doing something different'
+    puts 'Usage: ramdev [up|down]'
+    puts ''
+    puts "\tup\tCreate a ramdisk, move and link working folders."
+    puts "\tdown\tDeallocate ramdisk and restore all file paths."
   end
 end
