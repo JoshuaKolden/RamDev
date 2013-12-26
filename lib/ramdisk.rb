@@ -11,7 +11,11 @@ class SystemInfo
   end
 
   def self.mount(mountpoint, ramdisk)
-    `mount -o noatime -t hfs #{ramdisk} #{mountpoint}`
+    system("mount -o noatime -t hfs #{ramdisk} #{mountpoint}")
+  end
+
+  def self.sudomount(mountpoint, ramdisk)
+    system("sudo mount -o noatime -t hfs #{ramdisk} #{mountpoint}")
   end
 
   def self.unmount(mountpoint)
@@ -19,6 +23,7 @@ class SystemInfo
   end
 
   def self.deallocate(ramdisk)
+    raise "Deallocate called with nil device." if ramdisk.nil?
     `hdiutil detach #{ramdisk}`
     device = ramdisk[/\/*([^\/]*)$/,1]
     return "\"#{device}\" unmounted.\n\"#{device}\" ejected.\n"
@@ -105,8 +110,7 @@ class Ramdisk
     unmounted.each do |u|
       msg = system_interface.deallocate(u)
       if !msg =~ /.*unmounted\./
-        throw "ramdisk: #{u} failed to deallocate ramdisk with this message: #{msg}"
-        return false
+        raise "ramdisk: #{u} failed to deallocate ramdisk with this message: #{msg}"
       end
     end
     unmounted = []
@@ -121,21 +125,25 @@ class Ramdisk
       if msg =~ /Initialized .*#{ramdisk[/\/*([^\/]*)$/,1]} as a/
         return true
       else
-        throw "ramdisk failed to format HFS volume #{ramdisk}"
+        raise "ramdisk failed to format HFS volume #{ramdisk}"
       end
     else
-      throw "ramdisk doesn't understand how to build #{fileSystemFormat} file system"
+      raise "ramdisk doesn't understand how to build #{fileSystemFormat} file system"
     end
     return flase
   end
 
   def mount
-    msg = system_interface.mount(mountpoint, ramdisk)
-    if msg == ""
+    if system_interface.mount(mountpoint, ramdisk)
       return true
     else
-      throw "ramdisk failed to mount with this message: #{msg}"
-      return false
+      puts "Unable to mount, trying again with 'sudo'"
+      if system_interface.sudomount(mountpoint, ramdisk)
+        return true
+      else
+        puts "ramdisk failed to mount"
+        return false
+      end
     end
   end
 
@@ -146,7 +154,7 @@ class Ramdisk
       unmounted.push(unmounted_device)
       return true
     else
-      throw "ramdisk failed to un-mount with this message: #{msg}"
+      raise "ramdisk failed to un-mount with this message: #{msg}"
       return false
     end
   end

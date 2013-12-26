@@ -1,7 +1,7 @@
-require "ramdev_sync"
-
+require 'ramdisk'
+require 'ramdev_sync'
 require 'pstore'
-store = PStore.new("ramdev.pstore")
+require 'fileutils'
 
 class RamDev
   attr_reader :diskname, :ramdisk, :mountpoint
@@ -9,6 +9,7 @@ class RamDev
 
   def initialize(sufix = "_ramdev")
     @backupSuffix = sufix
+    @store = PStore.new("/tmp/ramdev.pstore")
   end
 
   def unbuild(rcpath)
@@ -22,7 +23,7 @@ class RamDev
     end
     ramdisk = Ramdisk.new(mountpoint)
 
-    pid = store.transaction do |s|
+    pid = @store.transaction do |s|
       s["pid"]
     end
 
@@ -47,7 +48,7 @@ class RamDev
     @memory
   end
 
-  def build(rcpath, size)
+  def build(rcpath, size = nil)
     @size = size
     @size ||= memory / 2
     load_runcom(rcpath)
@@ -56,9 +57,20 @@ class RamDev
     ramdisk = Ramdisk.new(mountpoint)
 
     puts "Allocating ramdisk size: #{@size / 1073741824} GB "
-    ramdisk.allocate(@size)
-    ramdisk.format(diskname, :hfs)
-    ramdisk.mount
+    if( !ramdisk.allocate(@size) )
+      puts "Allocation failed. Size: #{@size} bytes"
+      exit
+    end
+    if( !ramdisk.format(diskname, :hfs) )
+      puts "Failed to format disk."
+      exit
+    end
+    if( !ramdisk.mount )
+      puts "Failed to mount at #{mountpoint}"
+      ramdisk.deallocate
+      exit
+    end
+
 
     copy_folders if valid_paths?
 
@@ -66,18 +78,22 @@ class RamDev
 
     #FIX: Not compatible with Windows:
 
-    if pid = fork
-      store.transaction do |s|
-        s["pid"] = pid
+
+
+
+    fork do
+      puts "ramdev_sync pid #{Process.pid}"
+
+      @store.transaction do |s|
+        s["pid"] = Process.pid
       end
-      puts "ramdev_sync pid = #{pid}"
-    else
+
       trap("QUIT") do
         puts "Interrupted by signal, ramdev_sync will stop now."
         exit
       end
 
-      watcher = RamDevSync.new(rcpath)
+      watcher = RamDevSync.new(File.open(rcpath))
       watcher.listen
       puts "ramdev_sync listening..."
       sleep
