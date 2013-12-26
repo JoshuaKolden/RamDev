@@ -27,7 +27,7 @@ class RamDev
       s["pid"]
     end
 
-    kill("QUIT", pid) if pid
+    Process.kill("QUIT", pid) if pid
 
     ramdisk.unmount
     ramdisk.deallocate

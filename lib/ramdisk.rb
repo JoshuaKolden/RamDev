@@ -19,7 +19,11 @@ class SystemInfo
   end
 
   def self.unmount(mountpoint)
-    `umount -f #{mountpoint}`
+    system("umount -f #{mountpoint}")
+  end
+
+  def self.sudounmount(mountpoint, ramdisk)
+    system("sudo hdiutil eject -force #{mountpoint}")
   end
 
   def self.deallocate(ramdisk)
@@ -149,13 +153,17 @@ class Ramdisk
 
   def unmount
     unmounted_device = ramdisk
-    msg = system_interface.unmount(mountpoint)
-    if msg == ""
+    if system_interface.unmount(mountpoint)
       unmounted.push(unmounted_device)
       return true
     else
-      raise "ramdisk failed to un-mount with this message: #{msg}"
-      return false
+      puts "Unable to unmount, trying again with 'sudo'."
+      if system_interface.sudounmount(mountpoint, unmounted_device)
+        return true
+      else
+        puts "ramdisk failed to un-mount."
+        return false
+      end
     end
   end
 
