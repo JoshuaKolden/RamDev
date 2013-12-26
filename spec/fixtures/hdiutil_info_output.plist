@@ -35,7 +35,7 @@
           <key>dev-entry</key>
           <string>/dev/disk666</string>
           <key>mount-point</key>
-          <string>test/ramdisk_moutpoint</string>
+          <string>test/ramdisk_fake</string>
         </dict>
       </array>
       <key>writeable</key>

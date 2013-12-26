@@ -5,11 +5,11 @@ require 'ramdev_sync'
 describe RamDevSync do
 
   before(:each) do
-    @watcher = RamDevSync.new ( File.open( "spec/fixtures/devrc") )
+    @watcher = RamDevSync.new ( File.open( "spec/fixtures/ramdevrc_noMount") )
   end
 
   it "it loads rc file and parses paths" do
-    @watcher.paths.length.should eq(2)
+    @watcher.paths.length.should eq(3)
   end
 
   it "has correct path for watch target" do
@@ -20,9 +20,9 @@ describe RamDevSync do
   end
 
   it "has correct path for rsync target" do
-    @watcher.watchpaths[0][1].should eq("test/test_source_backup_DEV")
-    @watcher.watchpaths[1][1].should eq("test/test_source2_backup_DEV")
-    @watcher.watchpaths[2][1].should eq("test/test_source3_backup_DEV")
+    @watcher.watchpaths[0][1].should eq("test/test_source_ramdev")
+    @watcher.watchpaths[1][1].should eq("test/test_source2_ramdev")
+    @watcher.watchpaths[2][1].should eq("test/test_source3_ramdev")
   end
 
   it "listens for changes in watchpaths" do
