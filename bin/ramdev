@@ -6,19 +6,23 @@ require 'etc'
 
 #TODO: Override the rc file from the command line
 #FIX: This is not windows compatible.
-user = Etc.getlogin
-rcfile = File.join(Dir.home(user), ".ramdevrc")
 
 Main do
   mode 'up' do
     def run
+      user = Etc.getlogin
+      rcfile = File.join(Dir.home(user), ".ramdevrc")
+
       rd = RamDev.new
-      rd.build(rcfile, 10485760) #10MB
+      rd.build(rcfile) #10MB
     end
   end
 
   mode 'down' do
     def run
+      user = Etc.getlogin
+      rcfile = File.join(Dir.home(user), ".ramdevrc")
+
       rd = RamDev.new
       rd.unbuild(rcfile)
     end

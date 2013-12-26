@@ -66,7 +66,7 @@ class RamDev
 
     #FIX: Not compatible with Windows:
 
-    if pid = fork do
+    if pid = fork
       store.transaction do |s|
         s["pid"] = pid
       end
@@ -88,7 +88,7 @@ class RamDev
   def load_runcom(rcfile)
 
     return if @loaded == true
-    rc = YAML.load(rcpath)
+    rc = YAML.load(File.open(rcfile))
     if rc.nil?
       @mountpoint = "/ramdev"
       @diskname   = "ramdev"
