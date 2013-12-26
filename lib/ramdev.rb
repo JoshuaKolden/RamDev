@@ -8,7 +8,20 @@ class RamDev
   end
 
   def unbuild(rcpath)
+    #TODO force sync
+    load_runcom(rcpath)
 
+    if !restore_folders
+      puts "Ramdisk shutdown was halted because there was a problem restoring folders."
+      puts "Eject the ramdisk manually once you've sorted out any issues."
+      return
+    end
+    ramdisk = Ramdisk.new(mountpoint)
+
+    ramdisk.unmount
+    ramdisk.deallocate
+
+    "RAM disk mounted at #{mountpoint}"
   end
 
   def build(rcpath, size=10485760)
@@ -56,7 +69,26 @@ class RamDev
     return true
   end
 
-  def copy_folders()
+  def restore_folders
+    @paths.each do |p|
+      src   = p["source"].gsub(/\/+$/,"")
+      next if src.nil? || src.length < 1
+      des   = p["destination"].gsub(/\/+$/,"").gsub(/^\/+/,"")
+      name  = src.match(/([^\/\\]+)$/)[1]
+
+      if File.exists? src+@backupSuffix
+        FileUtils.safe_unlink src if File.symlink?(src)
+        if File.exist?(src)
+          print "Conflict between #{src} and #{src+@backupSuffix}"
+          next
+        end
+        FileUtils.move(src+@backupSuffix, src)
+      end
+    end
+
+  end
+
+  def copy_folders
     @paths.each do |p|
       src   = p["source"].gsub(/\/+$/,"")
       next if src.nil? || src.length < 1

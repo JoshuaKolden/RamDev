@@ -50,10 +50,16 @@ describe 'ramdev ' do
 
   describe "down" do
 
-    it "spins down a disk" do
-      run "ramdev down"
+    before(:each) do
+      run "ramdev up"
     end
 
+    it "spins down a ramdisk" do
+      ramdisk.should be_mounted
+      run "ramdev down"
+      ramdisk.should_not be_mounted
+    end
+f
   end
 
   def run(shell_command)
