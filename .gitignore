@@ -12,6 +12,7 @@
 /db/*.sqlite3-journal
 
 # Ignore cruft
+*.gem
 *.rbc
 *.sassc
 .sass-cache
