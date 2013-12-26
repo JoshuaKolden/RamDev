@@ -1,0 +1,16 @@
+# This a yaml format file with settings for "ramdev".
+# See ramdev for more information.
+
+ramdisk:
+  name: test_ramedisk
+  mountpoint: "test/ramdisk_real"
+  paths:
+    -
+      source: "test/real_source1"
+      destination: ""
+    -
+      source: "test/real_source2/"
+      destination: ""
+    -
+      source: "test/real_source3/"
+      destination: "other_path"

@@ -1,13 +1,107 @@
+
+class RamDev
+  attr_reader :diskname, :ramdisk, :mountpoint
+    #path to rc file, and 10 mb default size.
+
+  def initialize(sufix = "_ramdev")
+    @backupSuffix = sufix
+  end
+
+  def unbuild(rcpath)
+
+  end
+
+  def build(rcpath, size=10485760)
+    load_runcom(rcpath)
+
+    ramdisk = Ramdisk.new(mountpoint)
+
+    ramdisk.allocate(10 * 1048576)
+    ramdisk.format(diskname, :hfs)
+    ramdisk.mount
+
+    copy_folders if valid_paths?
+
+    puts "RAM disk mounted at #{mountpoint}"
+  end
+
+  def load_runcom(rcpath)
+
+    return if @loaded == true
+
+    rc = YAML.load_file(rcpath)
+    if rc.nil?
+      @mountpoint = "/ramdev"
+      @diskname   = "ramdev"
+      @paths      ||= []
+      @paths.push({ source: Dir.pwd, destination: "" })
+    else
+      @mountpoint = rc["ramdisk"]["mountpoint"]
+      @diskname  = rc["ramdisk"]["name"]
+        # TODO: Get size of paths and create default ramdisk size based it (2x)
+      @paths     = rc["ramdisk"]["paths"]
+      @loaded    = true
+    end
+
+  end
+
+  def valid_paths?
+    @paths.each do |p|
+      src   = p["source"].gsub(/\/+$/,"")
+      if File.exist?("#{src}#{@backupSuffix}")
+        puts "A backup already exists for: '#{src}' at: '#{src}#{@backupSuffix}'"
+        return false
+      end
+    end
+    return true
+  end
+
+  def copy_folders()
+    @paths.each do |p|
+      src   = p["source"].gsub(/\/+$/,"")
+      next if src.nil? || src.length < 1
+      des   = p["destination"].gsub(/\/+$/,"").gsub(/^\/+/,"")
+      name  = src.match(/([^\/\\]+)$/)[1]
+      if des.length > 0
+        des = mountpoint+"/#{des}"
+        des = des.gsub(/\/{2,}/,"/")
+      else
+        des = mountpoint
+      end
+      des = File.absolute_path(des)
+      print "Copying #{src}...\n"
+      FileUtils.mkdir_p(des) unless File.exist?(des)
+      IO.popen("rsync --progress -ra #{src} #{des}") do |rsync_io|
+        until rsync_io.eof?
+          line = rsync_io.readline
+          line = line.gsub("\n","")
+          next unless line =~ /to-check/
+          m = line.match(/to-check=([0-9]+)\/([0-9]+)/)
+          scale = (m[1].to_f / m[2].to_f)
+          prog = "#{[9613].pack('U*')}" * ( (1.0 - scale) * 30.0).round
+
+          prog += " " * (scale * 30.0).round
+          print "#{prog}| #{des}/#{name}  "
+          print "\r"
+        end
+      end
+      print "\n"
+
+      FileUtils.move(src, src+@backupSuffix)
+
+      puts "Linking: #{name}"
+
+      File.symlink("#{des}/#{name}", src)
+    end
+  end
+
+end
+
+
 # require 'etc'
 # require 'yaml'
 # require 'fileutils'
 
-class RamDev
-
-  def create(*args)
-  end
-
-end
 
 #class RamDev
   #-------

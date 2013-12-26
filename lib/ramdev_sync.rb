@@ -1,4 +1,4 @@
-#!/usr/bin/env rvm ruby-2.0.0-p353@support do ruby
+#!/usr/bin/env ruby
 
 require 'listen'
 require 'yaml'
