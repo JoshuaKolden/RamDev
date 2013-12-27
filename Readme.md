@@ -1,14 +1,11 @@
 # RamDev
 
-RamDev is a ruby gem that creates a ramdisk, copies the folders you specify to the ramdrive then links them back to the original location.  It renames your original source folders and uses rsync to asynchronously copy any changes you make in the ramdisk back to the originals.
+RamDev is a ruby gem for boosting your work flow. It creates a ramdrive and copies your project files to it.  All files are automatically synced back to the hard drive in the background as you work using `rsync`.
 
-This means that all compiling, testing, and other processes that you run on your code happen very quickly in ram. File synchronization to disk happens in the background so it doesn't impact your work flow.
-
-When you're done working, a single command insures your files are synced and unmounts the ramdisk.
+Working in ram is extremely high performance, often 'real time' for software development and testing. Be sure to use high performance settings with other tools such as make's `-j` option to maximize the benefit.
 
 ## Installation
 
-__Not ready yet__
     $ gem install ramdev
 
 ## Platforms
@@ -21,9 +18,11 @@ To start the ram disk and copy files.
 
     $ ramdev up
 
-To sync files and shutdown the ram disk.
+By default ramdev will use half the system's ram for the ramdisk.
 
     $ ramdev down
+
+To shutdown the ramdisk, and restore paths.
 
 ## Configuration
 
@@ -31,7 +30,7 @@ Ramdev looks for a .ramdevrc file in your home directory.
 
 ```yaml
 # This a yaml format file with settings for "ramdev".
-# See ramdev for more information.
+# See https://github.com/JoshuaKolden/RamDev for more information.
 
 ramdisk:
   name: "NameOfDisk"
@@ -45,43 +44,65 @@ ramdisk:
       destination: "different/location/under/mountpoint"
 ```
 
-The name of the lowest folder in the source path is appended to the 'destination' path which in tern is appended to the mountpoint. For example
+The name of the lowest folder in the source path is appended to the 'destination' path which in tern is appended to the mountpoint.
 
-* Mount point: `/mnt`
-* Source: `/usr/joshua/myproject`
-* Destination: `current`
+###Example
 
+```yaml
+ramdisk:
+  name: "ramdrive"
+  mountpoint: "/mnt"
+  paths: # list of paths to copy to ramdisk, and location on ramdisk 
+    -
+      source: "/foo/bar/bat"
+      destination: "baz"
+```
+
+    $ ramdev up
+    
 Will create the the following path on the ramdisk:
 
-`/mnt/current/myproject`
+`/mnt/baz/bat`
 
-This will have a full copy of `/usr/joshua/myproject` And 
+This will have a full copy of `/foo/bar/bat`, so keep the size of your project (including temporary files) in mind.
 
-`/usr/joshua/myproject` will be renamed to `/usr/joshua/myproject_ramdev`
+`/foo/bar/bat` will be renamed to `/foo/bar/bat_ramdev`
 
-`/usr/joshua/myproject` will be a symbolic link to `/mnt/current/myproject`
+And `/foo/bar/bat` will be a symbolically linked to `/mnt/baz/bat`
 
-As you make changes to `/mnt/current/myproject` they will be automatically synced back to `/usr/joshua/myproject_ramdev`
+As you make changes to the ramdisk copy `/mnt/baz/bat` they will be automatically synced back to `/foo/bar/bat_ramdev` in the background.
 
-When you run `ramdev.down` `rsync` is run again just to be sure everything is
-in sync, then the `/usr/joshua/myproject` link is removed and `/usr/joshua/myproject_ramdev` is renamed back to `/usr/joshua/myproject`.
+Your project folders will effectively appear to be in the same place, but are in fact linked to ram. 
 
-## Problems
+    $ ramdev down
 
-If you loose power or run into problems, you can run
+When you run `ramdev down` the `/foo/bar/bat` link is removed and `/foo/bar/bat_ramdev` is renamed back to `/foo/bar/bat`; the ramdrive is then unmounted and the memory freed.
+
+## TODO
+
+- More configuration options. (esp. size of ramdisk)
+- Code cleanup.
+- Improve tests and coverage.
+- Support for creating new folders in the ramdisk root path.
+
+**Platforms**
+
+ - Support for Unix.
+
+Windows will have to be done by someone else, but if you do it I'll merge it.
+
+**Features**
 
     $ ramdev fix
-
-Your original folders will be moved back into place.
-
-To force sync:
+> To validate and fix all paths.
 
     $ ramdev sync
-
-To check if the ramdev file monitoring process is running correctly:
+> To force sync
 
     $ ramdev check
+> To check if ramdev_sync is running correctly:
 
----
 
-By Joshua Kolden.  License info coming soon.
+## License
+
+MIT License. Copyright 2013-2014 Joshua Kolden.
