@@ -1,5 +1,9 @@
 # RamDev
 
+[![Gem Version](https://badge.fury.io/rb/ramdev.png)](http://badge.fury.io/rb/ramdev)
+
+---
+
 RamDev is a ruby gem for boosting your work flow. It creates a ramdrive and copies your project files to it.  All files are automatically synced back to the hard drive in the background as you work using `rsync`.
 
 Working in ram is extremely high performance, often 'real time' for software development and testing. Be sure to use high performance settings with other tools such as make's `-j` option to maximize the benefit.
@@ -60,7 +64,7 @@ ramdisk:
 
     $ ramdev up
     
-Will create the the following path on the ramdisk:
+Will create the following path on the ramdisk:
 
 `/mnt/baz/bat`
 
