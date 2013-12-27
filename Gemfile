@@ -4,8 +4,8 @@ source 'http://rubygems.org'
 
 gem "rspec"
 gem "guard-rspec"
+gem 'simplecov'
+
 gem "main"
 gem "listen", '~> 2.0'
-gem 'simplecov'
-gem 'plist'
-#gem 'plist', git: "https://github.com/bekkou68/plist"
+gem 'plist', '>= 3.1.0'

@@ -9,6 +9,9 @@ Gem::Specification.new do |s|
   s.email         = ["joshua@crackcreative.com"]
   s.executables   = ['ramdev', 'ramdev_sync']
   s.files         = [ "lib/ramdev.rb", "lib/ramdev_sync.rb", "lib/ramdisk.rb"]
+  s.add_runtime_dependency "listen", ["~> 2.0"]
+  s.add_runtime_dependency "main", [">= 0.0"]
+  s.add_runtime_dependency "plist", ['>= 3.1.0']
   s.homepage      = "https://github.com/JoshuaKolden/RamDev"
   s.license       = 'MIT'
 end
