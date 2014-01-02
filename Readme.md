@@ -25,7 +25,9 @@ To start the ram disk and copy files.
 By default ramdev will use half the system's ram for the ramdisk. Specify `-m` option to set different amount of memory to use:
 
     $ ramdev up -m 300MB # use 300 Megabytes
+
 or
+
     $ ramdev up -m 2GB # use 2 Gegabytes
 
 To shutdown the ramdisk, and restore paths.
