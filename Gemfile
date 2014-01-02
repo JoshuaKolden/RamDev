@@ -8,4 +8,5 @@ gem 'simplecov'
 
 gem "main"
 gem "listen", '~> 2.0'
-gem 'plist', '>= 3.1.0'
+gem "plist", '>= 3.1.0'
+gem "rainbow"

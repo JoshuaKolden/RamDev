@@ -8,30 +8,95 @@ require 'etc'
 #FIX: This is not windows compatible.
 
 Main do
+  option('version') do
+    description 'Get version.'
+  end
+
+  option('rcfile', 'r') do
+    argument_required
+    cast :string
+    description 'Manually set the rcfile to use.'
+  end
+
   mode 'up' do
+    option('memory','m') do
+      argument_required
+      validate {|m| m =~ /[Mm][Bb]|[Gg][Bb]$/}
+      cast :string
+      description 'Optional size of ramdisk in MB or GB, (i.e. -m 300MB)'
+    end
+
     def run
       user = Etc.getlogin
-      rcfile = File.join(Dir.home(user), ".ramdevrc")
+      if(params['rcfile'].given?)
+        rcfile = params['rcfile'].value
+      else
+        rcfile = File.join(Dir.home(user), ".ramdevrc")
+      end
+
+
+      if(params['memory'].given?)
+        memString = params['memory'].value
+
+        mem = memString[/^[0-9]+/].to_i * 1048576    if memString =~ /[Mm][Bb]$/
+        mem = memString[/^[0-9]+/].to_i * 1073741824 if memString =~ /[Gg][Bb]$/
+      end
 
       rd = RamDev.new
-      rd.build(rcfile) #10MB
+      if mem
+        rd.build(rcfile, mem)
+      else
+        rd.build(rcfile)
+      end
+
+    end
+  end
+
+  mode 'fix' do
+    def run
+      user = Etc.getlogin
+      if(params['rcfile'].given?)
+        rcfile = params['rcfile'].value
+      else
+        rcfile = File.join(Dir.home(user), ".ramdevrc")
+      end
+
+      rd = RamDev.new
+      rd.fix(rcfile)
     end
   end
 
   mode 'down' do
+    option('force', 'f') do
+      description 'Attempt to force ramdisk shutdown even if folder are in a bad state (only used for testing).'
+    end
+
     def run
       user = Etc.getlogin
-      rcfile = File.join(Dir.home(user), ".ramdevrc")
+      if(params['rcfile'].given?)
+        rcfile = params['rcfile'].value
+      else
+        rcfile = File.join(Dir.home(user), ".ramdevrc")
+      end
 
       rd = RamDev.new
-      rd.unbuild(rcfile)
+      if(params['force'].given?)
+        rd.unbuild(rcfile,force: true)
+      else
+        rd.unbuild(rcfile)
+      end
+
     end
   end
 
   def run()
-    puts 'Usage: ramdev [up|down]'
-    puts ''
-    puts "\tup\tCreate a ramdisk, move and link working folders."
-    puts "\tdown\tDeallocate ramdisk and restore all file paths."
+    if(params['version'].given?)
+      puts 'ramdev v0.2.0'
+    else
+      puts 'Usage: ramdev [up|down]'
+      puts ''
+      puts "\tup\tCreate a ramdisk, move and link working folders."
+      puts "\tdown\tDeallocate ramdisk and restore all file paths."
+    end
   end
 end

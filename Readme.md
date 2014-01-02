@@ -22,15 +22,27 @@ To start the ram disk and copy files.
 
     $ ramdev up
 
-By default ramdev will use half the system's ram for the ramdisk.
+By default ramdev will use half the system's ram for the ramdisk. Specify `-m` option to set different amount of memory to use:
 
-    $ ramdev down
+    $ ramdev up -m 300MB # use 300 Megabytes
+or
+    $ ramdev up -m 2GB # use 2 Gegabytes
 
 To shutdown the ramdisk, and restore paths.
 
+    $ ramdev down
+
+To fix paths and links after an unexpected shutdown.
+
+    $ ramdev fix
+
 ## Configuration
 
-Ramdev looks for a .ramdevrc file in your home directory.
+By default ramdev looks for a .ramdevrc file in your home directory. You can specify a different file on the command line with the `-r` option:
+
+    $ ramdev up -r path/to/ramdevrc
+
+### ramdevrc format
 
 ```yaml
 # This a yaml format file with settings for "ramdev".
@@ -84,9 +96,7 @@ When you run `ramdev down` the `/foo/bar/bat` link is removed and `/foo/bar/bat_
 
 ## TODO
 
-- More configuration options. (esp. size of ramdisk)
 - Code cleanup.
-- Improve tests and coverage.
 - Support for creating new folders in the ramdisk root path.
 
 **Platforms**
@@ -96,9 +106,6 @@ When you run `ramdev down` the `/foo/bar/bat` link is removed and `/foo/bar/bat_
 Windows will have to be done by someone else, but if you do it I'll merge it.
 
 **Features**
-
-    $ ramdev fix
-> To validate and fix all paths.
 
     $ ramdev sync
 > To force sync

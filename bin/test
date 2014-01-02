@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+
+#this file is just to test command line arguments.
+
+require 'etc'
+require 'main'
+
+Main do
+  option('rcfile', 'r') do
+    argument_required
+    cast :string
+    description 'Manually set the rcfile to use.'
+  end
+
+  mode 'up' do
+    option('memory','m') do
+      argument_required
+      validate {|m| m =~ /[Mm][Bb]|[Gg][Bb]$/}
+      cast :string
+      description 'Optional size of ramdisk in MB or GB, (i.e. -m 300MB)'
+    end
+
+    def run
+
+      user = Etc.getlogin
+      if(params['rcfile'].given?)
+        puts "Up Given: #{params['rcfile'].value}"
+      else
+        puts "Up Not Given."
+      end
+
+      if(params['memory'].given?)
+        memString = params['memory'].value
+
+        mem = memString[/^[0-9]+/].to_i * 1048576    if memString =~ /[Mm][Bb]$/
+        mem = memString[/^[0-9]+/].to_i * 1073741824 if memString =~ /[Gg][Bb]$/
+
+        puts "Size: #{mem}"
+      end
+
+    end
+
+  end
+
+  mode 'down' do
+
+    def run
+      user = Etc.getlogin
+      if(params['rcfile'].given?)
+        puts "Down Given: #{params['rcfile'].value}"
+      else
+        puts "Down Not Given."
+      end
+    end
+
+  end
+
+end

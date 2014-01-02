@@ -2,13 +2,14 @@
 
 require 'listen'
 require 'yaml'
-# require 'pstore'
-# store = PStore.new("ramdev_sync.pstore")
+require 'pstore'
 
 class RamDevSync
   attr_reader :paths, :listener
 
   def initialize(rcpath, sufix = "_ramdev")
+    @store = PStore.new("/tmp/ramdev.pstore")
+
     @backupSuffix = sufix
     load_runcom(rcpath)
 
@@ -47,7 +48,27 @@ class RamDevSync
 
   def running?
     return true if !@listener.nil? && @listener.listen?
-    return false
+    begin
+      pid = @store.transaction do |s|
+        s["pid"]
+      end
+      return false if pid.nil?
+      Process.kill(0, pid)
+      return true
+    #rescue Errno::ESRCH #not running or zombied
+    #rescue Errno::EPERM #permission denied to query
+    rescue
+      @store.transaction do |s|
+        s["pid"] = nil
+      end
+      return false
+    end
+  end
+
+  def pid
+    @store.transaction do |s|
+      s["pid"]
+    end
   end
 
   def watchpaths

@@ -2,6 +2,7 @@ require 'ramdisk'
 require 'ramdev_sync'
 require 'pstore'
 require 'fileutils'
+require 'rainbow'
 
 class RamDev
   attr_reader :diskname, :ramdisk, :mountpoint
@@ -12,11 +13,40 @@ class RamDev
     @store = PStore.new("/tmp/ramdev.pstore")
   end
 
-  def unbuild(rcpath)
+  def fix(rcpath)
+    load_runcom(rcpath)
+
+    watcher = RamDevSync.new(File.open(rcpath))
+
+    if watcher.running?
+      puts `ps #{watcher.pid}`
+      puts "It appears ramdev is still running at pid: #{watcher.pid}.".color(:yellow)
+      puts "Try 'ramdev down' first to fix any file linking problem."
+      puts "Otherwise kill the process first before running 'ramdev fix'."
+      return
+    end
+
+    @paths.each do |p|
+      src   = p["source"].gsub(/\/+$/,"")
+      if( File.exists?(src+@backupSuffix) )
+        if(!File.exists?(src) || File.symlink?(src))
+          FileUtils.safe_unlink(src) if File.symlink?(src)
+
+          puts "Moving backup: ".color(:green) + "#{src+@backupSuffix} to #{src}"
+          FileUtils.move(src+@backupSuffix, src)
+        else
+          puts "skipping file: ".color(:yellow) + ("#{src}")
+        end
+      end
+    end
+
+  end
+
+  def unbuild(rcpath, force = false)
     #TODO force sync
     load_runcom(rcpath)
 
-    if !restore_folders
+    if !force && !restore_folders
       puts "Ramdisk shutdown was halted because there was a problem restoring folders."
       puts "Eject the ramdisk manually once you've sorted out any issues."
       return
@@ -28,6 +58,10 @@ class RamDev
     end
 
     Process.kill("QUIT", pid) if pid
+
+    @store.transaction do |s|
+      s["pid"] = nil
+    end
 
     ramdisk.unmount
     ramdisk.deallocate
@@ -51,14 +85,15 @@ class RamDev
   def build(rcpath, size = nil)
     @size = size
     @size ||= memory / 2
+
     load_runcom(rcpath)
-
-
     ramdisk = Ramdisk.new(mountpoint)
 
-    puts "Allocating ramdisk size: #{@size / 1073741824} GB "
+    human_num = "#{@size / 1048576}".reverse.gsub(/...(?=.)/,'\&,').reverse
+    puts "Allocating ramdisk size: #{human_num} MB "
+
     if( !ramdisk.allocate(@size) )
-      puts "Allocation failed. Size: #{@size} bytes"
+      puts "Allocation failed. Size: #{human_num} MB"
       exit
     end
     if( !ramdisk.format(diskname, :hfs) )
@@ -72,17 +107,19 @@ class RamDev
     end
 
 
-    copy_folders if valid_paths?
+    if !valid_paths?
+      puts "paths are not valid!".color(:red)
+      raise(:hell)
+    end
+    copy_folders
 
     puts "RAM disk mounted at #{mountpoint}"
 
     #FIX: Not compatible with Windows:
 
-
-
-
     fork do
       puts "ramdev_sync pid #{Process.pid}"
+      File.open("/tmp/ramdev_sync.pid", "w") {|f| f.write("#{Process.pid}\n")}
 
       @store.transaction do |s|
         s["pid"] = Process.pid

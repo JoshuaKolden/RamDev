@@ -5,9 +5,13 @@ require 'ramdev_sync'
 describe RamDevSync do
 
   let(:watcher) {RamDevSync.new ( File.open( "spec/fixtures/ramdevrc_noMount") )}
-  # before(:each) do
-  #   @watcher =
-  # end
+
+  before(:all) do
+    FileUtils.mkdir_p("test/ramdisk")
+    FileUtils.mkdir_p("test/ramdisk/test_source")
+    FileUtils.mkdir_p("test/ramdisk/test_source2")
+    FileUtils.mkdir_p("test/ramdisk/other_path/test_source3")
+  end
 
   it "it loads rc file and parses paths" do
     watcher.paths.length.should eq(3)
@@ -32,10 +36,18 @@ describe RamDevSync do
   end
 
   it "calls rsync when watchpaths change" do
-    watcher.should_receive(:rsync)
-    watcher.listen
+    ## Other tests may slow this process down so we pause
+    ## at the beginning to let the system flush IO from previous test.
+    watcher2 = RamDevSync.new ( File.open( "spec/fixtures/ramdevrc_noMount") )
+    watcher2.should_receive(:rsync)
+    watcher2.listen
+    sleep 1
     FileUtils.touch('test/ramdisk/test_source/testfile.md')
     sleep 1 # one second tolerance, failure to sync within 1 sec is a fail!
+  end
+
+  after(:all) do
+    FileUtils.rm_rf("test")
   end
 
   ##TODO tests for forking
